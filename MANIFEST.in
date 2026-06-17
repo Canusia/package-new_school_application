@@ -1,0 +1,10 @@
+include README.md
+recursive-include new_school_application/migrations *
+recursive-include new_school_application/templates *
+recursive-include new_school_application/forms *
+recursive-include new_school_application/views *
+recursive-include new_school_application/urls *
+recursive-include new_school_application/serializers *
+recursive-include new_school_application/settings *
+recursive-include new_school_application/services *
+recursive-include new_school_application/reports *

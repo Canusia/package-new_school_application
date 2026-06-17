@@ -1,0 +1,27 @@
+<p class="mb-2">
+  <button class="btn btn-sm btn-primary" type="button" data-toggle="collapse"
+          data-target="#add_note_collapse" aria-expanded="false" aria-controls="add_note_collapse">
+    <i class="fas fa-plus fas-light text-light"></i>&nbsp;Add New Note
+  </button>
+</p>
+<div class="collapse mb-3" id="add_note_collapse">
+  <div class="card card-body bg-gray-100">
+    <form id="frm_note" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add_note">
+      <textarea name="message" class="form-control mb-2" placeholder="Add a note"></textarea>
+      <button type="submit" class="btn btn-sm btn-primary">Add Note</button>
+    </form>
+  </div>
+</div>
+<table id="nsa_notes" class="table table-striped" style="width:100%"
+       data-server-side="true" data-ajax="{{ note_api_url }}">
+  <thead>
+    <tr>
+      <th>Created</th>
+      <th>Note</th>
+      <th>Type</th>
+      <th>By</th>
+    </tr>
+  </thead>
+</table>

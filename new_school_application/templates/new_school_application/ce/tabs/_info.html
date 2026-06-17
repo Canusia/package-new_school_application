@@ -1,0 +1,129 @@
+{% load crispy_forms_tags %}
+<div class="nsa-info">
+  <style>
+    .nsa-info { --nsa-accent:#4f46e5; --nsa-ink:#1f2937; --nsa-muted:#6b7280; --nsa-line:#e5e7eb; color:var(--nsa-ink); }
+    .nsa-info .nsa-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:.7rem; }
+    .nsa-info .nsa-eyebrow { font-size:.67rem; letter-spacing:.13em; text-transform:uppercase; color:var(--nsa-muted); font-weight:600; }
+    .nsa-info .nsa-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(225px,1fr)); gap:.7rem; }
+    .nsa-info .nsa-card { position:relative; background:#fff; border:1px solid var(--nsa-line); border-radius:12px; padding:.8rem .9rem .85rem 1.05rem; overflow:hidden; transition:box-shadow .18s ease, transform .18s ease, border-color .18s ease; }
+    .nsa-info .nsa-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--nsa-accent); opacity:.5; }
+    .nsa-info .nsa-card:hover { box-shadow:0 8px 22px -10px rgba(31,41,55,.3); transform:translateY(-1px); border-color:#d4d8e2; }
+    .nsa-info .nsa-name { font-weight:600; font-size:.97rem; margin:.18rem 0 .42rem; }
+    .nsa-info .nsa-email-row { display:flex; align-items:center; gap:.4rem; font-size:.84rem; }
+    .nsa-info .nsa-ico { color:var(--nsa-accent); font-size:.78rem; }
+    .nsa-info .nsa-email { color:var(--nsa-accent); text-decoration:none; word-break:break-all; }
+    .nsa-info .nsa-email:hover { text-decoration:underline; }
+    .nsa-info .nsa-muted { color:var(--nsa-muted); }
+    .nsa-info .nsa-copy { border:none; background:transparent; color:var(--nsa-muted); cursor:pointer; padding:.12rem .3rem; border-radius:6px; transition:background .15s,color .15s; margin-left:auto; }
+    .nsa-info .nsa-copy:hover { background:#eef2ff; color:var(--nsa-accent); }
+    .nsa-info .nsa-copy.copied { color:#059669; }
+    .nsa-info .nsa-note-toggle { border:1px solid var(--nsa-accent); color:var(--nsa-accent); background:transparent; border-radius:8px; padding:.32rem .72rem; font-size:.78rem; font-weight:600; cursor:pointer; transition:background .15s,color .15s; }
+    .nsa-info .nsa-note-toggle:hover { background:var(--nsa-accent); color:#fff; }
+    .nsa-info .nsa-note-card { margin-top:1rem; border:1px solid #c7d2fe; background:linear-gradient(180deg,#f5f7ff,#fff); border-radius:12px; padding:1rem; }
+    .nsa-info .nsa-recipients { display:flex; flex-wrap:wrap; gap:.4rem; margin:.5rem 0 .6rem; }
+    .nsa-info .nsa-chip { display:inline-flex; align-items:center; gap:.35rem; border:1px solid var(--nsa-line); border-radius:999px; padding:.22rem .62rem; font-size:.8rem; margin:0; cursor:pointer; background:#fff; user-select:none; }
+    .nsa-info .nsa-chip input { margin:0; }
+    .nsa-info .nsa-note-actions { display:flex; align-items:center; gap:.5rem; margin-top:.6rem; }
+    .nsa-info .nsa-note-feedback { font-size:.8rem; color:#059669; }
+    .nsa-info .nsa-addr-head { display:block; margin:1.3rem 0 .55rem; }
+    .nsa-info .nsa-hs-form label { font-size:.64rem; letter-spacing:.08em; text-transform:uppercase; color:var(--nsa-muted); font-weight:600; margin-bottom:.18rem; }
+    .nsa-info .nsa-hs-form .form-control[readonly] { background:#f9fafb; border-color:var(--nsa-line); color:var(--nsa-ink); cursor:default; }
+    .nsa-info .nsa-hs-form .form-control[readonly]:focus { box-shadow:none; border-color:var(--nsa-line); }
+  </style>
+
+  <div class="nsa-head">
+    <span class="nsa-eyebrow">Contacts</span>
+    <button type="button" class="nsa-note-toggle" id="btn_email_note">
+      <i class="fas fa-paper-plane"></i>&nbsp;Email a note
+    </button>
+  </div>
+
+  <div class="nsa-grid">
+    {% for c in contacts %}
+    <div class="nsa-card">
+      <span class="nsa-eyebrow">{{ c.role }}</span>
+      <div class="nsa-name">{{ c.name|default:'—' }}</div>
+      {% if c.email %}
+      <div class="nsa-email-row">
+        <i class="fas fa-envelope nsa-ico"></i>
+        <a class="nsa-email" href="mailto:{{ c.email }}">{{ c.email }}</a>
+        <button type="button" class="nsa-copy" data-copy="{{ c.email }}" title="Copy email"><i class="far fa-copy"></i></button>
+      </div>
+      {% else %}
+      <div class="nsa-email-row nsa-muted"><i class="fas fa-envelope nsa-ico"></i>&nbsp;No email on file</div>
+      {% endif %}
+    </div>
+    {% endfor %}
+    <div class="nsa-card">
+      <span class="nsa-eyebrow">District</span>
+      <div class="nsa-name">{{ record.district|default:'—' }}</div>
+    </div>
+  </div>
+
+  <div class="nsa-note-card d-none" id="email_note_panel">
+    <span class="nsa-eyebrow">Email a note to the applicant</span>
+    <form id="frm_email_note" method="post" class="mt-2">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="email_note">
+      <div class="nsa-recipients">
+        {% for c in contacts %}
+          {% if c.email %}
+          <label class="nsa-chip">
+            <input type="checkbox" name="recipient" value="{{ c.key }}" {% if c.key == 'submitter' %}checked{% endif %}>
+            <span>{{ c.role }}</span>
+          </label>
+          {% endif %}
+        {% endfor %}
+      </div>
+      <textarea name="message" class="form-control" rows="4"
+        placeholder="Write a message. It will be emailed to the selected contacts and saved to the Notes tab."></textarea>
+      <div class="nsa-note-actions">
+        <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-paper-plane"></i>&nbsp;Send &amp; Save</button>
+        <button type="button" class="btn btn-sm btn-light" id="btn_email_note_cancel">Cancel</button>
+        <span class="nsa-note-feedback" id="email_note_feedback"></span>
+      </div>
+    </form>
+  </div>
+
+  <span class="nsa-eyebrow nsa-addr-head">High School Details</span>
+  <form class="nsa-hs-form" onsubmit="return false">
+    <div class="form-row">
+      <div class="form-group col-md-6">
+        <label>High School Name</label>
+        <input type="text" class="form-control" value="{{ record.name|default:'' }}" readonly>
+      </div>
+      <div class="form-group col-md-3">
+        <label>CEEB Code</label>
+        <input type="text" class="form-control" value="{{ record.information.address.code|default:'' }}" readonly>
+      </div>
+      <div class="form-group col-md-3">
+        <label>Country</label>
+        <input type="text" class="form-control" value="{{ record.information.address.country|default:'' }}" readonly>
+      </div>
+      <div class="form-group col-md-12">
+        <label>Address</label>
+        <input type="text" class="form-control" value="{{ record.information.address.address|default:'' }}" readonly>
+      </div>
+      <div class="form-group col-md-4">
+        <label>City</label>
+        <input type="text" class="form-control" value="{{ record.information.address.city|default:'' }}" readonly>
+      </div>
+      <div class="form-group col-md-2">
+        <label>State / Province</label>
+        <input type="text" class="form-control" value="{{ record.information.address.state|default:'' }}" readonly>
+      </div>
+      <div class="form-group col-md-3">
+        <label>Zip / Postal Code</label>
+        <input type="text" class="form-control" value="{{ record.information.address.postal_code|default:'' }}" readonly>
+      </div>
+      <div class="form-group col-md-3">
+        <label>Phone</label>
+        <input type="text" class="form-control" value="{{ record.information.address.phone|default:'' }}" readonly>
+      </div>
+      <div class="form-group col-md-3">
+        <label>Fax</label>
+        <input type="text" class="form-control" value="{{ record.information.address.fax|default:'' }}" readonly>
+      </div>
+    </div>
+  </form>
+</div>

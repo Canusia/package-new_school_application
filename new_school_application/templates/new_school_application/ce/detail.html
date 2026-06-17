@@ -1,0 +1,194 @@
+{% extends "cis/logged-base.html" %}
+{% load crispy_forms_tags %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block body %}
+<main>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 text-gray-800">{{ record.name }}</h1>
+    <button class="btn btn-sm btn-danger" id="btn_delete">Delete</button>
+  </div>
+
+  <div class="row">
+    <div class="col-md-4">
+      <div class="card mb-3">
+        <div class="card-header">Status</div>
+        <div class="card-body">
+          <form id="frm_status" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="edit_application">
+            {{ form.status|as_crispy_field }}
+            {{ form.checklist|as_crispy_field }}
+            {{ form.file|as_crispy_field }}
+            <button type="submit" class="btn btn-primary btn-sm mt-2">Save</button>
+          </form>
+        </div>
+      </div>
+
+      {% if record.status == 'Decision Made' %}
+      <div class="card mb-3">
+        <div class="card-body">
+          <h6>Provisioning</h6>
+          <form method="post" id="frm_import">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="import_as_highschool">
+            <button type="submit" class="btn btn-sm btn-success">Import as New High School</button>
+          </form>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if record.has_application_reviewed %}
+      <div class="card mb-3">
+        <div class="card-body">
+          <h6>Approval Notification</h6>
+          <p class="small"><a target="_blank"
+             href="{% url 'new_school_application_ce:approval_letter' record.id %}">View Approval Letter (PDF)</a></p>
+          <form method="post" id="frm_approval">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="send_approval_notification">
+            {{ approval_notification_form.notif_checklist }}
+            <button type="submit" class="btn btn-sm btn-primary mt-2">Send Notification</button>
+          </form>
+          <small class="text-muted">{{ record.sexy_approval_notification_sent_on }}</small>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="col-md-8">
+      <ul class="nav nav-tabs">
+        {% for slug, tab in detail_tabs.items %}
+        <li class="nav-item">
+          <a class="nav-link {% if tab.active %}active{% endif %}" data-toggle="tab" href="#{{ tab.slug }}">
+            {% if tab.icon %}<i class="{{ tab.icon }}"></i> {% endif %}{{ tab.title }}
+            {% if tab.badge %}<span class="badge badge-pill badge-secondary">{{ tab.badge }}</span>{% endif %}
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+
+      <!-- Tab panes -->
+      <div class="tab-content border border-top-0 p-3 bg-white">
+        {% for slug, tab in detail_tabs.items %}
+        {% if tab.lazy %}
+        <div class="tab-pane {% if tab.active %}active{% endif %}" id="{{ tab.slug }}" data-tab-url="{{ tab.url }}"></div>
+        {% else %}
+        <div class="tab-pane {% if tab.active %}active{% endif %}" id="{{ tab.slug }}">{{ tab.html|safe }}</div>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // status + note forms post via AJAX; delete posts to the delete endpoint
+    function postForm(sel) {
+      $(sel).on('submit', function (e) {
+        e.preventDefault();
+        $.post($(this).attr('action') || window.location.href, $(this).serialize(), function () {
+          window.location.reload();
+        });
+      });
+    }
+    $(function () {
+      // notes server-side DataTable
+      var notesTable = $('#nsa_notes').DataTable({
+        serverSide: true,
+        processing: true,
+        ajax: { url: $('#nsa_notes').data('ajax') },
+        order: [[0, 'desc']],
+        columns: [
+          { data: 'created_on' },
+          { data: 'message', orderable: false },
+          { data: 'type', searchable: false },
+          { data: 'created_by_display', searchable: false, orderable: false }
+        ]
+      });
+      window.notesTable = notesTable;
+
+      // add-note posts via AJAX, then reloads the notes table only
+      $('#frm_note').on('submit', function (e) {
+        e.preventDefault();
+        var $form = $(this);
+        $.post(window.location.href, $form.serialize(), function () {
+          $form.find('textarea[name=message]').val('');
+          $('#add_note_collapse').collapse('hide');
+          notesTable.ajax.reload();
+        });
+      });
+
+      // edit interested courses
+      $('#btn_edit_courses').on('click', function () {
+        $('#frm_courses').toggleClass('d-none');
+      });
+      $('#btn_cancel_courses').on('click', function () {
+        $('#frm_courses').addClass('d-none');
+      });
+      $('#frm_courses').on('submit', function (e) {
+        e.preventDefault();
+        $.post(window.location.href, $(this).serialize(), function () {
+          window.location.reload();
+        });
+      });
+
+      $('#frm_status').on('submit', function (e) {
+        e.preventDefault();
+        var fd = new FormData(this);
+        $.ajax({url: window.location.href, method: 'POST', data: fd, processData: false,
+                contentType: false, success: function () { window.location.reload(); }});
+      });
+      $('#btn_delete').on('click', function () {
+        if (!confirm('Delete this application?')) return;
+        $.post('{% url "new_school_application_ce:delete" record.id %}',
+               {csrfmiddlewaretoken: '{{ csrf_token }}'},
+               function (r) { window.location.href = r.redirect; });
+      });
+      $('#frm_import').on('submit', function (e) {
+        e.preventDefault();
+        $.post(window.location.href, $(this).serialize(), function (r) {
+          if (r.redirect) { window.location.href = r.redirect; } else { window.location.reload(); }
+        });
+      });
+      $('#frm_approval').on('submit', function (e) {
+        e.preventDefault();
+        $.post(window.location.href, $(this).serialize(), function () { window.location.reload(); });
+      });
+
+      // copy-to-clipboard for emails (localhost/https is a secure context)
+      $('.nsa-info').on('click', '.nsa-copy', function () {
+        var btn = this, text = $(btn).data('copy');
+        function flash() {
+          var $i = $(btn).find('i'), old = $i.attr('class');
+          $(btn).addClass('copied'); $i.attr('class', 'fas fa-check');
+          setTimeout(function () { $i.attr('class', old); $(btn).removeClass('copied'); }, 1200);
+        }
+        function fallback() {
+          var t = document.createElement('textarea'); t.value = text;
+          document.body.appendChild(t); t.select();
+          try { document.execCommand('copy'); } catch (e) {}
+          document.body.removeChild(t); flash();
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(flash, fallback);
+        } else { fallback(); }
+      });
+
+      // email-a-note composer
+      $('#btn_email_note').on('click', function () { $('#email_note_panel').toggleClass('d-none'); });
+      $('#btn_email_note_cancel').on('click', function () { $('#email_note_panel').addClass('d-none'); });
+      $('#frm_email_note').on('submit', function (e) {
+        e.preventDefault();
+        var $f = $(this), $fb = $('#email_note_feedback').css('color', '').text('Sending…');
+        $.post(window.location.href, $f.serialize(), function (r) {
+          $fb.css('color', '#059669').text(r.message || 'Sent.');
+          $f.find('textarea[name=message]').val('');
+          if (window.notesTable) window.notesTable.ajax.reload();
+          setTimeout(function () { $('#email_note_panel').addClass('d-none'); $fb.text(''); }, 1600);
+        }).fail(function (x) {
+          $fb.css('color', '#dc2626').text((x.responseJSON && x.responseJSON.message) || 'Could not send.');
+        });
+      });
+    });
+  </script>
+</main>
+{% endblock %}

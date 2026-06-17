@@ -1,0 +1,105 @@
+{% extends "cis/logged-base.html" %}
+{% block title %}{{ page_title }}{% endblock %}
+{% load static %}
+
+{% block body %}
+<main>
+  <div class="row">
+    <div class="col-sm-6 col-xs-12">
+      <h1 class="h3 mb-4 text-gray-800">{{ page_title }}</h1>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    {% include "cis/messages.html" with messages=messages %}
+    <ul class="nav nav-tabs">
+      <li class="nav-item">
+        <a class="nav-link active" data-toggle="tab" href="#all">All {{ page_title }}</a>
+      </li>
+    </ul>
+
+    <div class="tab-content">
+      <div class="tab-pane active" id="all">
+        <div class="bg-white border border-top-0">
+          <div class="col-12 pt-3 mb-3">
+
+            <div class="row">
+              <div class="col-md-12 mb-3">
+                <div class="card">
+                  <div class="card-body bg-gray-200">
+                    <form id="nsa_filter" class="form-inline filter">
+                      <div class="form-row">
+                        <div class="col">
+                          <div class="float-right">
+                            <input type="date" name="created_on" placeholder="Created From" class="form-control mt-2">&nbsp;&nbsp;
+                            <input type="date" name="created_until" placeholder="Created Until" class="form-control mt-2">&nbsp;&nbsp;
+                            <select class="form-control mt-2" name="status">
+                              <option value="">By Status</option>
+                              {% for value, label in status_options %}
+                              <option value="{{ value }}">{{ label }}</option>
+                              {% endfor %}
+                            </select>
+                            <div class="clearfix">&nbsp;</div>
+                            <input name="btn_search" id="id_btn_filter" type="button"
+                                   value="Filter &amp; Get Results" class="btn btn-primary">
+                          </div>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <table id="records_all" class="table table-striped responsive" style="width:100%">
+              <thead>
+                <tr>
+                  <th>Created</th>
+                  <th>High School</th>
+                  <th>State</th>
+                  <th>Status</th>
+                  <th>Courses</th>
+                  <th>Other College Courses</th>
+                  <th><span class="sr-only">Actions</span></th>
+                </tr>
+              </thead>
+            </table>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    jQuery(function ($) {
+      var baseUrl = "{{ api_url }}?format=datatables";
+      var table = $('#records_all').DataTable({
+        serverSide: true,
+        processing: true,
+        ajax: { url: baseUrl },
+        lengthMenu: [30, 50, 100],
+        order: [[0, 'desc']],
+        columns: [
+          { data: 'created_on' },
+          { data: 'name' },
+          { data: 'state', searchable: false, orderable: false },
+          { data: 'status', searchable: false },
+          { data: 'interested_courses_count', searchable: false, orderable: false },
+          { data: 'other_college_courses_display', searchable: false, orderable: false },
+          { data: 'detail_url', searchable: false, orderable: false,
+            render: function (d) {
+              return "<a class='btn btn-sm btn-primary record-details' refresh-target='table' href='" + d + "'>View Details</a>";
+            } }
+        ]
+      });
+      window.table = table;
+
+      $('#nsa_filter [name=btn_search]').on('click', function () {
+        var params = $('#nsa_filter').serialize();
+        table.ajax.url(baseUrl + '&' + params).load();
+      });
+    });
+  </script>
+</main>
+{% endblock %}

@@ -1,0 +1,102 @@
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h6 class="text-gray-800 mb-0">Interested Courses</h6>
+  <button type="button" class="btn btn-sm btn-outline-primary" id="btn_edit_courses">Edit Interested Courses</button>
+</div>
+<table class="table table-sm table-striped responsive" id="interested_courses_list" style="width:100%">
+  <thead>
+    <tr><th>Course</th><th>Stream</th><th>Credits</th><th>Status</th></tr>
+  </thead>
+  <tbody>
+    {% for ic in interested_courses %}
+    <tr>
+      <td>{{ ic.course.title }}<br><small class="text-muted">{{ ic.course.name }}</small></td>
+      <td>{{ ic.course.stream|join:", " }}</td>
+      <td>{{ ic.course.credit_hours }}</td>
+      <td>{{ ic.status }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="4" class="text-muted">No interested courses yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<form id="frm_courses" method="post" class="d-none border rounded p-3 mb-3 bg-gray-100">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="update_courses">
+  <div class="mb-2">
+    {% for course in available_courses %}
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" name="course"
+               value="{{ course.id }}" id="course_{{ course.id }}"
+               {% if course.id|stringformat:'s' in interested_course_ids %}checked{% endif %}>
+        <label class="form-check-label" for="course_{{ course.id }}">{{ course.title }}</label>
+      </div>
+    {% empty %}
+      <p class="text-muted mb-0">No courses available for new schools.</p>
+    {% endfor %}
+  </div>
+  <button type="submit" class="btn btn-sm btn-primary">Save Courses</button>
+  <button type="button" class="btn btn-sm btn-light" id="btn_cancel_courses">Cancel</button>
+</form>
+
+<hr>
+<h6 class="text-gray-800">Curriculum Details</h6>
+<div class="nsa-roform">
+  <style>
+    .nsa-roform label { font-size:.64rem; letter-spacing:.08em; text-transform:uppercase; color:#6b7280; font-weight:600; margin-bottom:.18rem; }
+    .nsa-roform .form-control[readonly] { background:#f9fafb; border-color:#e5e7eb; color:#1f2937; cursor:default; }
+    .nsa-roform .form-control[readonly]:focus { box-shadow:none; border-color:#e5e7eb; }
+  </style>
+  <form class="nsa-curric-form" onsubmit="return false">
+    <div class="form-row">
+      <div class="form-group col-md-4">
+        <label>Anticipated faculty (per subject)</label>
+        <input type="text" class="form-control" value="{{ record.information.faculty|default:'' }}" readonly>
+      </div>
+      <div class="form-group col-md-4">
+        <label>Students eligible annually</label>
+        <input type="text" class="form-control" value="{{ record.information.students_in_course|default:'' }}" readonly>
+      </div>
+      <div class="form-group col-md-4">
+        <label>Students expected to enroll annually</label>
+        <input type="text" class="form-control" value="{{ record.information.students_annually|default:'' }}" readonly>
+      </div>
+      <div class="form-group col-md-12">
+        <label>Student eligibility criteria</label>
+        <textarea class="form-control" rows="2" readonly>{{ record.information.student_eligibility|default:'' }}</textarea>
+      </div>
+      <div class="form-group col-md-12">
+        <label>Curriculum fit</label>
+        <textarea class="form-control" rows="2" readonly>{{ record.information.course_fit|default:'' }}</textarea>
+      </div>
+      <div class="form-group col-md-12">
+        <label>Expected impact / implementation</label>
+        <textarea class="form-control" rows="2" readonly>{{ record.information.implementation|default:'' }}</textarea>
+      </div>
+      <div class="form-group col-md-6">
+        <label>Other college-level courses offered</label>
+        <input type="text" class="form-control" value="{{ record.other_college_courses|join:", " }}" readonly>
+      </div>
+      <div class="form-group col-md-6">
+        <label>Other (specified)</label>
+        <input type="text" class="form-control" value="{{ record.information.other_course|default:'' }}" readonly>
+      </div>
+      <div class="form-group col-md-6">
+        <label>How they heard about us</label>
+        <input type="text" class="form-control" value="{{ record.information.hear_about_us|default:'' }}" readonly>
+      </div>
+      <div class="form-group col-md-6">
+        <label>Heard about us (specified)</label>
+        <input type="text" class="form-control" value="{{ record.information.hear_about_us_from|default:'' }}" readonly>
+      </div>
+      <div class="form-group col-md-12">
+        <label>Course guide</label>
+        <div>
+          {% if record.course_guide %}
+            <a href="{{ record.course_guide.url }}" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="fas fa-download text-light"></i>&nbsp;Download course guide</a>
+          {% else %}<span class="text-muted">—</span>{% endif %}
+        </div>
+      </div>
+    </div>
+  </form>
+</div>

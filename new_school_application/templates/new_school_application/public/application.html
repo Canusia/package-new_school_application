@@ -1,0 +1,51 @@
+{% extends 'cis/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block body %}
+<div class="container my-4">
+  <div class="card">
+    <div class="p-3">
+  <h2>New High School Application</h2>
+  <p class="text-muted">Tell us about your school and key contacts. In the next
+     step you'll choose the course(s) you'd like to offer.</p>
+
+  <form method="post" action="">
+    {% csrf_token %}
+    {{ form.action }}
+
+    <h4 class="mt-4">Your Information</h4>
+    {{ form.your_name|as_crispy_field }}
+    {{ form.your_email|as_crispy_field }}
+
+    <h4 class="mt-4">High School Information</h4>
+    {{ form.highschool_name|as_crispy_field }}
+    {{ form.highschool_code|as_crispy_field }}
+    {{ form.highschool_address|as_crispy_field }}
+    {{ form.highschool_city|as_crispy_field }}
+    {{ form.highschool_state|as_crispy_field }}
+    {{ form.highschool_postal_code|as_crispy_field }}
+    {{ form.highschool_phone|as_crispy_field }}
+    {{ form.highschool_fax|as_crispy_field }}
+    {{ form.highschool_country|as_crispy_field }}
+
+    <h4 class="mt-4">High School Administrator(s)</h4>
+    {{ form.principal_name|as_crispy_field }}
+    {{ form.principal_email|as_crispy_field }}
+    {{ form.primary_contact_name|as_crispy_field }}
+    {{ form.primary_contact_email|as_crispy_field }}
+    {{ form.guidance_name|as_crispy_field }}
+    {{ form.guidance_email|as_crispy_field }}
+
+    <h4 class="mt-4">District &amp; Superintendent</h4>
+    {{ form.district_name|as_crispy_field }}
+    {{ form.superintendent_name|as_crispy_field }}
+    {{ form.superintendent_email|as_crispy_field }}
+
+    {% if form.captcha %}{{ form.captcha|as_crispy_field }}{% endif %}
+
+    <button type="submit" class="btn btn-primary mt-3">Continue &raquo;</button>
+  </form>
+  </div>
+  </div>
+</div>
+{% endblock %}

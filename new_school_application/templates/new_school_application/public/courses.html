@@ -1,0 +1,70 @@
+{% extends 'cis/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block body %}
+<div class="container my-4">
+  <div class="card">
+    <div class="card-body">
+      <div class="p-3">
+  <h2>Select Courses</h2>
+
+  {% if record.can_edit %}
+  <form method="post" action="" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.action }}
+
+    <h4 class="mt-3">Courses you're interested in offering</h4>
+    <table id="available_courses" class="table table-striped" style="width:100%">
+      <thead>
+        <tr><th>Select</th><th>Stream</th><th>Course</th></tr>
+      </thead>
+      <tbody>
+        {% for course in available_courses %}
+        <tr>
+          <td><input class="form-input" type="checkbox" name="course" value="{{ course.id }}"></td>
+          <td>{{ course.stream|join:", " }}</td>
+          <td>
+            <small class="text-muted">{{ course.name }}</small><br>
+            {{ course.title }} — {{ course.credit_hours }} credits
+            (<a target="_blank" href="{{ course.url }}">Course Description</a>)
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if form.course.errors %}<div class="text-danger">{{ form.course.errors }}</div>{% endif %}
+
+    <h4 class="mt-4">Curriculum</h4>
+    {{ form.faculty|as_crispy_field }}
+    {{ form.student_eligibility|as_crispy_field }}
+    {{ form.students_in_course|as_crispy_field }}
+    {{ form.students_annually|as_crispy_field }}
+    {{ form.course_fit|as_crispy_field }}
+    {{ form.implementation|as_crispy_field }}
+    {{ form.other_college_course|as_crispy_field }}
+    {{ form.other_course|as_crispy_field }}
+    {{ form.course_guide|as_crispy_field }}
+    {{ form.course_guide_link }}
+    {{ form.hear_about_us|as_crispy_field }}
+    {{ form.hear_about_us_from|as_crispy_field }}
+
+    <button type="submit" class="btn btn-primary mt-3">Submit Application</button>
+  </form>
+
+  <script>
+  jQuery(function ($) {
+    $('#available_courses').DataTable({
+      paging: false, scrollY: '500px', order: [[1, 'asc']],
+      rowGroup: { dataSrc: 1 },
+      columnDefs: [{ targets: 1, visible: false }],
+    });
+  });
+  </script>
+  {% else %}
+  <div class="alert alert-warning">This application can no longer be edited.</div>
+  {% endif %}
+  </div>
+</div>
+</div>
+  </div>
+{% endblock %}
