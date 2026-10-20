@@ -54,7 +54,7 @@ class HighSchoolApplicationFormTest(TestCase):
         self.assertNotIn('captcha', form.fields)
 
     def test_save_creates_application_with_serialized_json(self):
-        # bind without captcha by simulating a CE-admin request (skips recaptcha)
+        # bind without captcha by simulating a CE-admin request (skips the captcha)
         request = SimpleNamespace(
             user=SimpleNamespace(is_authenticated=True, is_anonymous=False,
                                  get_roles=lambda: ['ce']))

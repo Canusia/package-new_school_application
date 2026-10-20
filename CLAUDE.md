@@ -70,7 +70,7 @@ Test conventions used throughout:
 - CE/faculty users via Django groups: `user.groups.add(Group.objects.get_or_create(name='ce')[0])`. `CustomUser.get_roles()` reads group names.
 - `create_user(username=…, email=…)` — this tenant's user manager requires `username`.
 - Disconnect `django_login_history.post_login` in `setUpClass` before `force_login` (it crashes on the test request's `None` IP). See `tests/test_ce_views.py` for the pattern.
-- The container sets `RECAPTCHA_TESTING=True`, so the anonymous intake POST validates with a dummy `g-recaptcha-response`.
+- The captcha comes from the tenant's `cis.captcha.CaptchaField` (`new_school_application/captcha.py`; reCAPTCHA or ALTCHA by the tenant's `CAPTCHA_PROVIDER`, ewu#87). The container sets `CAPTCHA_TESTING=True`, so the anonymous intake POST passes the captcha without a real solve.
 - Minimal `Course` fixture: `Cohort.objects.create(name=…, designator=…)` + `Course.objects.create(name, title, cohort, catalog_number, credit_hours)`. Avoid building deep Course graphs — assert FK wiring via `_meta` where possible (mirrors `class_visit`).
 - File uploads / report CSV writes hit S3 (`PrivateMediaStorage`); mock the storage in tests (see `tests/test_report.py`, `tests/test_public_forms.py`).
 

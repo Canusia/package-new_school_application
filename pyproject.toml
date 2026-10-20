@@ -4,6 +4,6 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "myce_new_school_application"
-version = "0.1"
+version = "0.0.3"
 description = "MyCE - New School Application"
 requires-python = ">=3.8"

@@ -1,6 +1,6 @@
 from django import forms
 
-from django_recaptcha.fields import ReCaptchaField
+from ..captcha import CaptchaField
 
 from cis.models.course import Course
 
@@ -66,7 +66,7 @@ class HighSchoolApplicationForm(forms.Form):
     superintendent_email = forms.EmailField(required=True, label='Superintendent Email')
 
     action = forms.CharField(required=True, widget=forms.HiddenInput, initial='part_1')
-    captcha = ReCaptchaField(label='')
+    captcha = CaptchaField(label='')
 
     def __init__(self, request=None, record=None, *args, **kwargs):
         super().__init__(*args, **kwargs)

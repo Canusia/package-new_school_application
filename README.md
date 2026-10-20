@@ -8,7 +8,7 @@ It is a **pip-installable Django submodule** with a dual outer/inner layout (the
 
 ## Features
 
-- **Public 2-step intake** (`/new_school_application/`, unauthenticated) — school + contacts, then course selection + curriculum answers + course-guide upload. reCAPTCHA-protected for anonymous users.
+- **Public 2-step intake** (`/new_school_application/`, unauthenticated) — school + contacts, then course selection + curriculum answers + course-guide upload. Captcha-protected for anonymous users (the tenant's `cis.captcha.CaptchaField`).
 - **CE admin console** (`/ce/new_school_applications/`) — filterable DataTable list; a detail page (opens in the shared modal) with a contact-card Info tab (mailto + copy-to-clipboard + "email a note"), an Interested-Courses tab (read-only curriculum + edit-courses), and a DRF-backed Notes tab.
 - **Faculty review** (`/faculty/new_school_application/`) — reviewers (course administrators) submit a per-course decision; assignment + in-app alerts are signal-driven.
 - **Approval + provisioning** — send an approval notification, download the approval-letter PDF, and "Import as New High School" (creates a `HighSchool` + `HSAdministrator`/`HSAdministratorPosition` records).
@@ -19,7 +19,7 @@ It is a **pip-installable Django submodule** with a dual outer/inner layout (the
 ## Requirements
 
 - Django ≥ 3.2 (built/tested on Django 5.2)
-- The host MyCE app providing the `cis` core app (`Course`, `HighSchool`, `HSAdministrator`, `Location`, `Setting`, `CustomUser`, `cis.utils`, `cis.menu`, `cis.backends.storage_backend`), the `alerts` app, the `report` app, `crispy_forms`, `django_recaptcha`, `django-model-utils`, `django-multiselectfield`, `django-mailer`, and `rest_framework` + `rest_framework_datatables`.
+- The host MyCE app providing the `cis` core app (`Course`, `HighSchool`, `HSAdministrator`, `Location`, `Setting`, `CustomUser`, `cis.utils`, `cis.menu`, `cis.backends.storage_backend`), the `alerts` app, the `report` app, `crispy_forms`, the captcha package its `CAPTCHA_PROVIDER` needs (`django_recaptcha` or `django_altcha`), `django-model-utils`, `django-multiselectfield`, `django-mailer`, and `rest_framework` + `rest_framework_datatables`.
 
 ---
 
@@ -87,10 +87,10 @@ docker exec -w /app/webapp django_web_ewu python manage.py register_reports    #
 
 `register_settings` surfaces the **New School Application Language & Emails** settings page; `register_reports` adds the CSV report to the CE Reports area.
 
-### 6. Configure email + reCAPTCHA
+### 6. Configure email + captcha
 
 - Open the **New School Application Language & Emails** settings page and set **Email Status** (`is_active`): `Yes` (send live), `Debug` (redirect to the debug list), or `No` (suppress — the default). Fill the email templates + the internal recipient list, and the approval-letter template.
-- Set `RECAPTCHA_PUBLIC_KEY` / `RECAPTCHA_PRIVATE_KEY` (in `SECRETS`) so the public intake form's captcha works. (For local/dev/preview, set env `RECAPTCHA_TESTING=True` to bypass.)
+- The public intake form uses the tenant's `cis.captcha.CaptchaField` (cis ≥ v0.1.27a; older cis falls back to django-recaptcha). Configure the provider the tenant uses: `RECAPTCHA_PUBLIC_KEY` / `RECAPTCHA_PRIVATE_KEY` for reCAPTCHA, or `CAPTCHA_PROVIDER = 'altcha'` + `ALTCHA_HMAC_KEY` + a shared cache for ALTCHA. (For local/dev/preview, set env `CAPTCHA_TESTING=True` to bypass.)
 - The approval-letter PDF requires `pdfkit` + `wkhtmltopdf` in the runtime.
 
 ---
@@ -120,7 +120,7 @@ Email templates render with Django `{{ shortcode }}` variables; user-supplied da
 
 | Portal | Mount | Namespace | Gate |
 |--------|-------|-----------|------|
-| Public intake | `/new_school_application/` | `new_school_application` | none (reCAPTCHA) |
+| Public intake | `/new_school_application/` | `new_school_application` | none (captcha) |
 | CE admin | `/ce/new_school_applications/` | `new_school_application_ce` | `user_has_cis_role` / `CISUserOnly` |
 | Faculty review | `/faculty/new_school_application/` | `new_school_application_faculty` | `user_has_faculty_role` / `FacultyUserOnly` |
 
@@ -132,7 +132,7 @@ Email templates render with Django `{{ shortcode }}` variables; user-supplied da
 docker exec -w /app/webapp django_web_ewu python manage.py test new_school_application -v 1
 ```
 
-See `CLAUDE.md` for the test conventions (group-based role users, the `django_login_history` signal disconnect, `RECAPTCHA_TESTING`, the minimal `Course` fixture, storage mocking).
+See `CLAUDE.md` for the test conventions (group-based role users, the `django_login_history` signal disconnect, `CAPTCHA_TESTING`, the minimal `Course` fixture, storage mocking).
 
 ---
 
